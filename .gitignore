@@ -1,0 +1,12 @@
+notes
+.vscode
+.venv
+requirements.txt
+
+__pycache__/
+*.py[cod]
+
+
+
+
+
