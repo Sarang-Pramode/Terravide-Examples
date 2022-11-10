@@ -1,7 +1,11 @@
 notes
+datasets
 .vscode
 .venv
+.ipynb_checkpoints
 requirements.txt
+test_notebook.ipynb
+testbed_script.py
 
 __pycache__/
 *.py[cod]
