@@ -3,30 +3,30 @@ import LasFilePreprocessing as LFP
 import open3d as o3d
 import pptk
 
+
 import time
+import os
 
 
-
-
+def info(title):
+    print(title)
+    print('module name:', __name__)
+    print('parent process:', os.getppid())
+    print('process id:', os.getpid())
 
 
 def task(x):
     return x*2
 
-TileDivision = 4 #test purposes
+TileDivision = 60 #test purposes
 #store Get_subtileArray() result
 rows, cols = (TileDivision, TileDivision)
 Matrix_Buffer = [[0]*cols]*rows
 
-def task2(TileObj,row_ID,col_ID):
+def CreateSubtileArr_P(TileObj,row_ID,col_ID):
+    info('Funtion - CreateSubtileArr_P()')
     X_div_len, Y_div_len = TileObj.Get_SubTileDimensions()
-
-    
-
     Matrix_Buffer[row_ID][col_ID] = TileObj.Get_subtile(X_div_len, Y_div_len, row_ID, col_ID)
-
-
-
 
 
 if __name__ == '__main__':
@@ -53,13 +53,17 @@ if __name__ == '__main__':
     stime = s_end - s_start
     print("Serial Time : ",stime)
 
+    test_start = time.time()
+    a = [[[i,j]for j in range(TileDivision)] for i in range(TileDivision)] #NOTE: Bottleneck here, as TileDivision increases(X6), list comprehension is approximately 30times slower
+    test_end = time.time()
+    print("List Comp time test = ", test_end - test_start)
+
     #Parrallelized
     p_start = time.time()
     X_div_len, Y_div_len = TileObj.Get_SubTileDimensions()
 
     with Pool(5) as p:
-        #p.map(task2, [(TileObj,0,0)])
-        [[p.apply_async(task2, args=(TileObj, i, j)) for j in range(TileDivision)] for i in range(TileDivision)]
+        [[p.apply_async(CreateSubtileArr_P, args=(TileObj, i, j)) for j in range(TileDivision)] for i in range(TileDivision)]
     p_end = time.time()
     ptime = p_end - p_start
     print("Parallel Time : ",ptime)
