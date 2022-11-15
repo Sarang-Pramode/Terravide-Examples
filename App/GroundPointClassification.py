@@ -1,11 +1,9 @@
 from multiprocessing import Pool
-import LasFilePreprocessing as LFP
-import ExtractGroundPlane as GP
+import src.modules.LasFilePreprocessing as LFP
+import src.modules.ExtractGroundPlane as GP
 import pptk
-import progressbar
 
 import time
-import os
 
 def View3Dpoints(points):
     """Calls PPTK with basic config to plot 3d points
