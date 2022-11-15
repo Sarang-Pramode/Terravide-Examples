@@ -1,6 +1,8 @@
 import laspy
 import numpy as np
 import pandas as pd
+#import open3d as o3d
+
 
 def Read_lasFile(filepath):
     """Wrapper function which runs laspy.read(lasfilepath)
@@ -9,7 +11,7 @@ def Read_lasFile(filepath):
         filepath (string): Where is the .las file located
 
     Returns:
-        las object: las object  to read
+        las object: las object to read
     """
     return laspy.read(filepath)
 
@@ -78,7 +80,14 @@ def Get_SRpoints(lidar_Dataframe):
 
 class lasTile:
 
-    def __init__(self,LiDAR_Dataframe, TileDivision) -> None:
+    #initialize the raw tile by default unless specified
+    def __init__(self,LiDAR_Dataframe, TileDivision=1) -> None:
+        """Initialize lasTile class object to perform preprocessing
+
+        Args:
+            LiDAR_Dataframe (Pandas Dataframe): input a pandas dataframe with lidar data
+            TileDivision (int, optional): Number of divisions to divide the tile into, TileDivision= 10 divides the Tile into 100 smaller tiles. Defaults to 1.
+        """
         self.lidar_Dataframe = LiDAR_Dataframe
         self.TileDivision = TileDivision
 
@@ -87,11 +96,21 @@ class lasTile:
         self.Matrix_Buffer = [[0]*cols]*rows
 
     def Get_TileBounds(self):
+        """Get bounding values of tiles
+
+        Returns:
+            X.max, X.min, Y.max, Y.min: Bounding Values in XY plane
+        """
         #Get Max and Min Bounds of Current Las_Dataframe
         return self.lidar_Dataframe.X.max(), self.lidar_Dataframe.X.min(), self.lidar_Dataframe.Y.max(), self.lidar_Dataframe.Y.min()
     
 
     def Get_SubTileDimensions(self):
+        """Get dimensions of subtile
+
+        Returns:
+            X_div_len, Y_div_len: length, breadth of subtile
+        """
 
         #Taking a smaller portion of the lidar tile
         
@@ -116,6 +135,17 @@ class lasTile:
 
 
     def Get_subtile(self, X_div_len, Y_div_len, row_ID, col_ID):
+        """Get X,Y,Z points of specific lidar tile
+
+        Args:
+            X_div_len (int): Length of subtile
+            Y_div_len (int): Breadth of subtile
+            row_ID (int): row index of subtile in Tile Matrix
+            col_ID (int): column index of 
+
+        Returns:
+            Slice of lidar_Dataframe
+        """
 
         #Get Max and Min Bounds of Entire Las_Dataframe
         _ , X_min, _ , Y_min = self.Get_TileBounds()
@@ -135,6 +165,11 @@ class lasTile:
         ]
 
     def Get_subtileArray(self):
+        """Return a 2D matrix buffer of lidar subtiles indexed by row and column
+
+        Returns:
+            Matrix Buffer: 2d numpy array of size Nx3 
+        """
 
         X_div_len, Y_div_len = self.Get_SubTileDimensions()
 
@@ -146,7 +181,9 @@ class lasTile:
         return self.Matrix_Buffer
 
 
-    
+
+
+
 
 
 
