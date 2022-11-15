@@ -81,7 +81,7 @@ def Get_SRpoints(lidar_Dataframe):
 class lasTile:
 
     #initialize the raw tile by default unless specified
-    def __init__(self,LiDAR_Dataframe, TileDivision=1) -> None:
+    def __init__(self,LiDAR_Dataframe, TileDivision) -> None:
         """Initialize lasTile class object to perform preprocessing
 
         Args:
@@ -92,8 +92,8 @@ class lasTile:
         self.TileDivision = TileDivision
 
         #store Get_subtileArray() result
-        rows, cols = (TileDivision, TileDivision)
-        self.Matrix_Buffer = [[0]*cols]*rows
+        self.rows, self.cols = (self.TileDivision, self.TileDivision)
+        self.Matrix_Buffer =  [[0]*self.cols for _ in range(self.rows)]
 
     def Get_TileBounds(self):
         """Get bounding values of tiles
@@ -141,7 +141,7 @@ class lasTile:
             X_div_len (int): Length of subtile
             Y_div_len (int): Breadth of subtile
             row_ID (int): row index of subtile in Tile Matrix
-            col_ID (int): column index of 
+            col_ID (int): column index of subtile
 
         Returns:
             Slice of lidar_Dataframe
@@ -156,13 +156,15 @@ class lasTile:
         ysub_min = Y_min + col_ID*Y_div_len
         ysub_max = Y_min + col_ID*Y_div_len + Y_div_len
 
-
-        return self.lidar_Dataframe[ #Store each subset of the tile
+        subtile_df = self.lidar_Dataframe[ #Store each subset of the tile
             (
                 self.lidar_Dataframe['X'].between(xsub_min, xsub_max, inclusive=False) & 
                 self.lidar_Dataframe['Y'].between(ysub_min, ysub_max, inclusive=False)
             )
         ]
+
+
+        return subtile_df
 
     def Get_subtileArray(self):
         """Return a 2D matrix buffer of lidar subtiles indexed by row and column
@@ -173,11 +175,11 @@ class lasTile:
 
         X_div_len, Y_div_len = self.Get_SubTileDimensions()
 
-        for row_ID in range(self.TileDivision):
-            for col_ID in range(self.TileDivision):
+        for row_ID in range(self.rows):
+            for col_ID in range(self.cols):
 
                 self.Matrix_Buffer[row_ID][col_ID] = self.Get_subtile(X_div_len, Y_div_len, row_ID, col_ID)
-        
+                        
         return self.Matrix_Buffer
 
 
