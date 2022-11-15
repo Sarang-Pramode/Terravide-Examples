@@ -42,13 +42,20 @@ if __name__ == "__main__":
     SR_df = LasHandling.Get_SRpoints(lidar_df)
 
     #lasTile class
-    TileObj = MRC.MR_class(SR_df,TileDivision)
+    TileObj_SR = MRC.MR_class(SR_df,TileDivision)
+    TileObj_MR = MRC.MR_class(MR_df,TileDivision)
+
 
     #Serialized Creation of Lidar Subtiles
-    lidar_TilesubsetArr = TileObj.Get_subtileArray()
+    lidar_TilesubsetArr = TileObj_MR.Get_subtileArray()
+
+    #sanity check
+    temp_segmentPoints = lidar_TilesubsetArr[1][0].iloc[:,:3].to_numpy()
 
     #Get TreePoints
-    MR_TreePoints = TileObj.Get_MultipleReturnsVegetation()
+    Tree_points = TileObj_MR.Get_MultipleReturnsVegetation(temp_segmentPoints)
+
+    View3Dpoints(Tree_points)
 
 
 
