@@ -73,21 +73,16 @@ if __name__ == '__main__':
 
             tile_segment_points = lidar_TilesubsetArr[row][col].iloc[:,:3].to_numpy()
 
-            Ground_Points, Not_ground_points = GP_obj.Extract_GroundPoints(tile_segment_points)
+            Ground_Points, _ = GP_obj.Extract_GroundPoints(tile_segment_points)
 
             for k in Ground_Points:
                 Potential_Ground_Points.append(k) #append points which may be potentially ground points
-            for l in Not_ground_points:
-                Other_points.append(l)
     
     g_end = time.time()
     gtime = g_end - g_start
     print("Ground Point Extraction Algorithm Serial Time : ",gtime)
 
-    exitViewerFlag = False
-    while not exitViewerFlag:
-        v = pptk.viewer(Potential_Ground_Points)
-        exitViewerFlag = int(input("Enter a 1 to exit viewer"))
+    View3Dpoints(Potential_Ground_Points)
 
-    v.close()
-
+#TODO
+# Resolve unwanted roofs coming in ground plane 

@@ -1,20 +1,5 @@
 from ftplib import FTP
 
-
-def dummy_func():
-    """Simple dummy function to check if modulew was imported correctly
-
-    Prints "Success"
-
-    Parameters:
-        None
-
-    Returns:
-        None
-    """
-    print("Success")
-    return None
-
 ########################################################################################################
 #    FTP functions
 ########################################################################################################

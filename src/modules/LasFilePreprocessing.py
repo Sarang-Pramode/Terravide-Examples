@@ -95,6 +95,8 @@ class lasTile:
         self.rows, self.cols = (self.TileDivision, self.TileDivision)
         self.Matrix_Buffer =  [[0]*self.cols for _ in range(self.rows)]
 
+        self.Matrix_BufferFilled = False
+
     def Get_TileBounds(self):
         """Get bounding values of tiles
 
@@ -179,7 +181,10 @@ class lasTile:
             for col_ID in range(self.cols):
 
                 self.Matrix_Buffer[row_ID][col_ID] = self.Get_subtile(X_div_len, Y_div_len, row_ID, col_ID)
-                        
+        
+        #Update Matrix Buffer filled
+        self.Matrix_BufferFilled = True
+        
         return self.Matrix_Buffer
 
 
