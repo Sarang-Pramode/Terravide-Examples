@@ -1,8 +1,8 @@
 import src.modules.MultipleReturnsClassification as MRC
-
+import time
 import pptk
 
-# Aliases for simplicity
+# Aliases for simplicity - Preprocessing 
 LasHandling = MRC.LFP
 # LasProcess = LasHandling.lasTile
 #MR_Class = MRC.MR_class()
@@ -23,17 +23,22 @@ def View3Dpoints(points):
 
     return None
 
+
+
 if __name__ == "__main__":
+
+    script_start = time.time()
 
     print("Multiple Returns Classifcation Algorithm")
 
-    TileDivision = 10 #test purposes
+    TileDivision = 12
     rows, cols = (TileDivision, TileDivision)
 
     lasfilepath = 'Datasets/FTP_files/LiDAR/NYC_2017/25192.las'
     
     #Read las file
     lasfile_object = LasHandling.Read_lasFile(lasfilepath)
+
     #Create Dataframe from lasfile
     lidar_df, rawpoints = LasHandling.Create_lasFileDataframe(lasfileObject=lasfile_object)
 
@@ -41,21 +46,51 @@ if __name__ == "__main__":
     MR_df = LasHandling.Get_MRpoints(lidar_df)
     SR_df = LasHandling.Get_SRpoints(lidar_df)
 
-    #lasTile class
-    TileObj_SR = MRC.MR_class(SR_df,TileDivision)
-    TileObj_MR = MRC.MR_class(MR_df,TileDivision)
+    # #MR points raw:
+    # View3Dpoints(MR_df.iloc[0,:3].to_numpy())
 
+    # #SR points raw:
+    # View3Dpoints(SR_df.iloc[0,:3].to_numpy())
+
+    #lasTile class
+    TileObj_SR = MRC.MR_class(SR_df,TileDivision) #Single Return Points
+    TileObj_MR = MRC.MR_class(MR_df,TileDivision) #Multiple Return Points
 
     #Serialized Creation of Lidar Subtiles
     lidar_TilesubsetArr = TileObj_MR.Get_subtileArray()
 
     #sanity check
-    temp_segmentPoints = lidar_TilesubsetArr[1][0].iloc[:,:3].to_numpy()
+    #temp_segmentPoints = lidar_TilesubsetArr[1][0].iloc[:,:3].to_numpy()
 
-    #Get TreePoints
-    Tree_points = TileObj_MR.Get_MultipleReturnsVegetation(temp_segmentPoints)
+    #Counter : Iterating through each tile
+    Tilecounter = 0
 
-    View3Dpoints(Tree_points)
+    start = time.time()
+    Trees_Buffer = []
+    for row in range(TileDivision):
+        for col in range(TileDivision):
+            print(Tilecounter)
+            Tilecounter = Tilecounter + 1
+
+            tile_segment_points = lidar_TilesubsetArr[row][col].iloc[:,:3].to_numpy()
+
+            subTileTree_Points,  _ = TileObj_MR.Classify_MultipleReturns(tile_segment_points)
+
+            for t in subTileTree_Points:
+                Trees_Buffer.append(t)
+    
+    end = time.time()
+    MRtime = end - start
+    print("MR Point Classification Algorithm  Time : ",MRtime)
+    
+    print("Displaying Tree points")
+    View3Dpoints(Trees_Buffer)
+
+    script_end = time.time()
+    script_time = script_end - script_start
+    print("Script Time Time : ",script_time
+    )
+
 
 
 

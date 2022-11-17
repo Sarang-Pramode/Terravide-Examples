@@ -15,7 +15,7 @@ class MR_class(lasTileClass):
 
         #Populate Subtile Array Buffer if not called
         if not self.Matrix_BufferFilled :
-            print("WARN : Filling Matrix_Buffer as user did not call")
+            #print("WARN : Filling Matrix_Buffer as user did not call")
             self.localMatrixBuffer = self.Get_subtileArray()
         
         self.localMatrixBuffer = self.Matrix_Buffer
@@ -48,10 +48,11 @@ class MR_class(lasTileClass):
         return t[0].shape[0]
         
 
-    def Get_MultipleReturnsVegetation(self, MR_rawPoints, hp_eps=1.5, hp_min_points=30, HPF_THRESHOLD=200):
+    def Classify_MultipleReturns(self, MR_rawPoints, hp_eps=1.5, hp_min_points=30, HPF_THRESHOLD=200):
         
         #Store Classified Tree points
-        Trees_points = []
+        Tree_points = []
+        Not_Tree_points = []
 
         #Open3d point cloud object
         pcd = o3d.geometry.PointCloud()
@@ -70,25 +71,25 @@ class MR_class(lasTileClass):
         #HPF
         #Filter Tree Clouds by brute force approach (minimum number of points to represent a Tree)
         minimum_points_Tree_Cloud = HPF_THRESHOLD
-        keep_labels = []
+        Potential_TreeLabels = []
         for x in range(len(label_count_arr)):
             if label_count_arr[x][1] > minimum_points_Tree_Cloud:
-                keep_labels.append(label_count_arr[x][0])
+                Potential_TreeLabels.append(label_count_arr[x][0])
         
         labels = labels_dbscan
         for i in range(len(labels)):
-            if labels[i] not in keep_labels:
+            if labels[i] not in Potential_TreeLabels:
                 #set label of unwanted(less that HPF threshold) points to -1 
                 labels[i] = -1
     
-        for i in range(len(keep_labels)):
-            if keep_labels[i] == -1 :
-                #classify these points as not vegetation
-                #print("found no trees at -1 label clusters")
+        for i in range(len(Potential_TreeLabels)):
+            if Potential_TreeLabels[i] == -1 :
                 continue #do nothing for now
             else:
+                #Remove Errorneous Trees in MR points
+
                 #get cluster
-                interested_cluster_label = keep_labels[i]
+                interested_cluster_label = Potential_TreeLabels[i]
                 interested_label_indexes = np.where(labels == interested_cluster_label)
                 # need to use asarray, to extract points based on indexes later
                 clustered_points = np.asarray(pcd.points)
@@ -96,13 +97,14 @@ class MR_class(lasTileClass):
                 labels_PC_points_reduced = list(clustered_points[interested_label_indexes])
                 
                 #check if cluster is planar - last check using PCA to ensure no planar structure included
-                
                 if self.isPlane(labels_PC_points_reduced) == 0:#cluster points do not form a plane
-                    #Trees_points = np.append(Trees_points,labels_PC_points_reduced)
                     for k in labels_PC_points_reduced:
-                        Trees_points.append(k)
+                        Tree_points.append(k)
+                else:
+                    for m in labels_PC_points_reduced:
+                        Not_Tree_points.append(m)
         
-        return Trees_points
+        return Tree_points, Not_Tree_points
 
     def Get_MultipleReturnsNotVegetation(self):
         pass
