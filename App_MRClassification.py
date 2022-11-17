@@ -1,4 +1,5 @@
 import src.modules.MultipleReturnsClassification as MRC
+import src.modules.utils as util
 import time
 import pptk
 
@@ -34,7 +35,8 @@ if __name__ == "__main__":
     TileDivision = 12
     rows, cols = (TileDivision, TileDivision)
 
-    lasfilepath = 'Datasets/FTP_files/LiDAR/NYC_2017/25192.las'
+    las_fileID = 25192
+    lasfilepath = 'Datasets/FTP_files/LiDAR/NYC_2017/'+str(las_fileID)+'.las'
     
     #Read las file
     lasfile_object = LasHandling.Read_lasFile(lasfilepath)
@@ -45,12 +47,6 @@ if __name__ == "__main__":
     #Extract MR and SR points from Dataframe
     MR_df = LasHandling.Get_MRpoints(lidar_df)
     SR_df = LasHandling.Get_SRpoints(lidar_df)
-
-    # #MR points raw:
-    # View3Dpoints(MR_df.iloc[0,:3].to_numpy())
-
-    # #SR points raw:
-    # View3Dpoints(SR_df.iloc[0,:3].to_numpy())
 
     #lasTile class
     TileObj_SR = MRC.MR_class(SR_df,TileDivision) #Single Return Points
@@ -81,15 +77,17 @@ if __name__ == "__main__":
     
     end = time.time()
     MRtime = end - start
-    print("MR Point Classification Algorithm  Time : ",MRtime)
+    print("MR Point Classification Algorithm Time : ",MRtime)
     
     print("Displaying Tree points")
     View3Dpoints(Trees_Buffer)
 
+    #Write to LAS FILE
+    util.Write_lasFile(Trees_Buffer, "MR_Vegetation_from_"+str(las_fileID), [0]*len(Trees_Buffer))
+
     script_end = time.time()
     script_time = script_end - script_start
-    print("Script Time Time : ",script_time
-    )
+    print("Script Time Time : ",script_time)
 
 
 

@@ -1,4 +1,6 @@
 from ftplib import FTP
+import numpy as np
+import laspy
 
 ########################################################################################################
 #    FTP functions
@@ -77,3 +79,35 @@ def FTP_list_files(datayear=2021):
 
 ########################################################################################################
 ########################################################################################################
+
+def Write_lasFile(RawPoints, filename, pointlabels,
+    Path='Datasets/Package_Generated/', #Where to store
+    xscale=0.1, yscale=0.1, zscale=0.1, #lasFile default params
+    xoffset=0.0, yoffset=0.0, zoffset=0.0):
+
+    points = np.array(RawPoints)
+    las = laspy.create(file_version="1.4", point_format=3)
+
+    Xscale = xscale
+    Yscale = yscale
+    Zscale = zscale
+
+    Xoffset = xoffset
+    Yoffset = yoffset
+    Zoffset = zoffset
+
+    las.header.offsets = [Xoffset,Yoffset,Zoffset]
+    las.header.scales = [Xscale,Yscale,Zscale]
+
+    las.x = points[:, 0]
+    las.y = points[:, 1]
+    las.z = points[:, 2]
+
+    las.intensity = [0]*len(points)
+    las.classification =  pointlabels
+    las.return_number =  [0]*len(points)
+    las.number_of_returns =  [0]*len(points)
+
+    las.write(Path+filename+".las")
+
+    print("LasFile Written! Name - : ",Path+filename+".las")
