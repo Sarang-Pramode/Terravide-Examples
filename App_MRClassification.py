@@ -9,7 +9,7 @@ LasHandling = MRC.LFP
 #MR_Class = MRC.MR_class()
 
 
-def View3Dpoints(points):
+def View3Dpoints(points, color=[[1,0,0]]):
     """Calls PPTK with basic config to plot 3d points
 
     Args:
@@ -17,7 +17,11 @@ def View3Dpoints(points):
     """
     exitViewerFlag = False
     while not exitViewerFlag:
-        v = pptk.viewer(points)
+        v = pptk.viewer(points, color*len(points))
+        v.set(show_grid=False)
+        v.set(show_axis=False)
+        v.set(bg_color = [0,0,0,0])
+        v.set(point_size = 0.0004)
         exitViewerFlag = int(input("Enter a 1 to exit viewer : "))
 
     v.close()
