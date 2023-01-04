@@ -6,6 +6,9 @@ datasets
 requirements.txt
 test_notebook.ipynb
 testbed_script.py
+Generalize_TreeDetection.ipynb
+FTP_LIST_LAS_FILES
+Borough Boundaries
 
 __pycache__/
 *.py[cod]

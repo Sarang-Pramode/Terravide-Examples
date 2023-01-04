@@ -38,7 +38,7 @@ class MR_class(lasTileClass):
             return 2 ==> line
 
         '''
-        th = 2e-3
+        th = 2e-3 #modified from 2e-3
 
         pca = decomposition.PCA()
         pca.fit(XYZ)
@@ -48,7 +48,7 @@ class MR_class(lasTileClass):
         return t[0].shape[0]
         
 
-    def Classify_MultipleReturns(self, MR_rawPoints, hp_eps=1.5, hp_min_points=30, HPF_THRESHOLD=200):
+    def Classify_MultipleReturns(self, MR_rawPoints, hp_eps=1.5, hp_min_points=30, HPF_THRESHOLD=300):
         
         #Store Classified Tree points
         Tree_points = []

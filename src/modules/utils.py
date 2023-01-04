@@ -1,6 +1,10 @@
 from ftplib import FTP
 import numpy as np
 import laspy
+import pptk
+
+import os
+from os import path
 
 ########################################################################################################
 #    FTP functions
@@ -20,6 +24,8 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
 
     assert datayear in [2017,2021], "NYC recorded lidar data only during 2017 and 2021, default is 2021"
 
+    print("[UTIL] Function - Datayear : ",datayear)
+
     domain = 'ftp.gis.ny.gov'
     ftp_datadir = None
     if datayear == 2017:
@@ -27,23 +33,29 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
         folderpath_subdir = folderpath + "NYC_2017/"
     elif datayear == 2021:
         ftp_datadir =  'elevation/LIDAR/NYC_2021'
-        folderpath_subdir = folderpath + "NYC_2017/"
-
+        folderpath_subdir = folderpath + "NYC_2021/" 
     
-    #Login to server
-    ftp = FTP(domain)  # connect to host, default port
-    ftp.login()        # user anonymous, passwd anonymous@ - Loggin in as guest
+    #Added blocker to not redownload file if already exists
+    if (path.exists(folderpath_subdir+filename)):
+        print("File Exists")
+    
+    else:
+        print("Downloading File from FTP server")
 
-    #enter data directory
-    ftp.cwd(ftp_datadir)
+        #Login to server
+        ftp = FTP(domain)  # connect to host, default port
+        ftp.login()        # user anonymous, passwd anonymous@ - Loggin in as guest
 
-    #download and save file to specified path
-    with open(folderpath_subdir+filename, "wb") as file:
-        # use FTP's RETR command to download the file
-        ftp.retrbinary(f"RETR {filename}", file.write)
+        #enter data directory
+        ftp.cwd(ftp_datadir)
 
-    #Close FTP connection
-    ftp.close()
+        #download and save file to specified path
+        with open(folderpath_subdir+filename, "wb") as file:
+            # use FTP's RETR command to download the file
+            ftp.retrbinary(f"RETR {filename}", file.write)
+
+        #Close FTP connection
+        ftp.close()
 
     return None
 
@@ -111,3 +123,22 @@ def Write_lasFile(RawPoints, filename, pointlabels,
     las.write(Path+filename+".las")
 
     print("LasFile Written! Name - : ",Path+filename+".las")
+
+def View3Dpoints_inscript(points, color=[[1,0,0]]):
+    """Calls PPTK with basic config to plot 3d points
+
+    Args:
+        points (Nx3 Numpy Array): NX3 numpy array
+    """
+    exitViewerFlag = False
+    while not exitViewerFlag:
+        v = pptk.viewer(points, color*len(points))
+        v.set(show_grid=False)
+        v.set(show_axis=False)
+        v.set(bg_color = [0,0,0,0])
+        v.set(point_size = 0.0004)
+        exitViewerFlag = int(input("Enter a 1 to exit viewer : "))
+
+    v.close()
+
+    return None
