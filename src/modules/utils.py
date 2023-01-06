@@ -59,6 +59,9 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
 
     return None
 
+def FTP_GetFileList():
+
+
 def FTP_list_files(datayear=2021):
     """List all files in the lidar directory of NYC scans
 
