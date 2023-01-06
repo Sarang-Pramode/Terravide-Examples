@@ -124,6 +124,8 @@ def Write_lasFile(RawPoints, filename, pointlabels,
 
     print("LasFile Written! Name - : ",Path+filename+".las")
 
+
+
 def View3Dpoints_inscript(points, color=[[1,0,0]]):
     """Calls PPTK with basic config to plot 3d points
 
@@ -142,3 +144,7 @@ def View3Dpoints_inscript(points, color=[[1,0,0]]):
     v.close()
 
     return None
+
+########################################################################################################
+#    HyperParameter Tuning functions
+########################################################################################################
