@@ -59,7 +59,30 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
 
     return None
 
-#def FTP_GetFileList():
+def FTP_GetFileList(datayear=2021):
+
+    assert datayear in [2017,2021], "NYC recorded lidar data only during 2017 and 2021, default is 2021"
+
+    print("[UTIL] Function - Datayear : ",datayear)
+
+    domain = 'ftp.gis.ny.gov'
+    ftp_datadir = None
+    if datayear == 2017:
+        ftp_datadir =  'elevation/LIDAR/NYC_TopoBathymetric2017'
+        
+    elif datayear == 2021:
+        ftp_datadir =  'elevation/LIDAR/NYC_2021'
+
+    #Login to server
+    ftp = FTP(domain)  # connect to host, default port
+    ftp.login()        # user anonymous, passwd anonymous@ - Loggin in as guest
+
+    #enter data directory
+    ftp.cwd(ftp_datadir)
+    
+
+    filenames = ftp.nlst() # get filenames within the directory
+    return filenames
 
 
 def FTP_list_files(datayear=2021):
