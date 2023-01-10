@@ -193,6 +193,7 @@ class MR_class(lasTileClass):
             las_filename,
             JSON_data_buffer,
             TreeClusterID,
+            Ground_Tile_Zvalue,
             hp_eps=1.5, hp_min_points=30, 
             HPF_THRESHOLD=200, 
             PCA_PlaneTh = 2e-3):
@@ -293,7 +294,7 @@ class MR_class(lasTileClass):
                         # CREATE DICT TO APPEND TO JSON BUFFER
 
                         TreeClusterID = TreeClusterID + 1
-                        GroundZValue = -1 #TODO: need to add
+                        GroundZValue = Ground_Tile_Zvalue
                         TreeClusterCentroid = np.mean(Estimated_SingleTreePoints, axis=0)
                         latitude , longitude = self.ConvertLatLong(TreeClusterCentroid)
 

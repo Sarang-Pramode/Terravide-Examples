@@ -24,7 +24,7 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
 
     assert datayear in [2017,2021], "NYC recorded lidar data only during 2017 and 2021, default is 2021"
 
-    print("[UTIL] Function - Datayear : ",datayear)
+    #print("[UTIL] Function - Datayear : ",datayear)
 
     domain = 'ftp.gis.ny.gov'
     ftp_datadir = None
@@ -62,8 +62,6 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
 def FTP_GetFileList(datayear=2021):
 
     assert datayear in [2017,2021], "NYC recorded lidar data only during 2017 and 2021, default is 2021"
-
-    print("[UTIL] Function - Datayear : ",datayear)
 
     domain = 'ftp.gis.ny.gov'
     ftp_datadir = None

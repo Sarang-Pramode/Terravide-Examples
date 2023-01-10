@@ -9,6 +9,7 @@ testbed_script.py
 Generalize_TreeDetection.ipynb
 FTP_LIST_LAS_FILES
 Borough Boundaries
+Spatial_HP_Distribution.csv
 
 __pycache__/
 *.py[cod]
