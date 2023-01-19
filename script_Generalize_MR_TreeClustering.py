@@ -27,7 +27,7 @@ for f in filenames:
 
     print("Filename : ", f)
 
-    BLACKLIST_FILEIDs = [10170,2260]
+    BLACKLIST_FILEIDs = [10170,2260, 255, 30265]
 
     if int(f[:-4]) in BLACKLIST_FILEIDs:
         print("#### FILE INGORED - BLACKLISTED ####")
@@ -136,7 +136,7 @@ for f in filenames:
     for row in range(X_plane_tile_divisor_G):
         for col in range(Y_plane_tile_divisor_G):
             Tilecounter = Tilecounter + 1
-            print("Tile Number : ",Tilecounter)
+            print("Tile Number : ",Tilecounter," FILENAME : ", las_fileID)
 
             x_cloud_subset_min = X_min_G + row*X_div_len_G
             x_cloud_subset_max = X_min_G + row*X_div_len_G + X_div_len_G
