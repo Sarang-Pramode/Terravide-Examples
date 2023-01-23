@@ -10,7 +10,7 @@ from os import path
 #    FTP functions
 ########################################################################################################
 
-def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files/LiDAR/"):
+def FTP_download_lasfile(filename, datayear=2017, folderpath="/Volumes/Elements/Terravide/Datasets/FTP_files/LiDAR/"):
     """Downlaod a las file from ftp.gis.ny.gov
 
     Args:
@@ -21,6 +21,9 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
     Returns:
         None
     """
+    print('module name:', __name__)
+    print('parent process:', os.getppid())
+    print('process id:', os.getpid())
 
     assert datayear in [2017,2021], "NYC recorded lidar data only during 2017 and 2021, default is 2021"
 
@@ -37,7 +40,7 @@ def FTP_download_lasfile(filename, datayear=2021, folderpath="Datasets/FTP_files
     
     #Added blocker to not redownload file if already exists
     if (path.exists(folderpath_subdir+filename)):
-        print("File Exists")
+        print("Filename : ",filename," Exits")
     
     else:
         print("Downloading File from FTP server")
