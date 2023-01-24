@@ -11,6 +11,9 @@ FTP_LIST_LAS_FILES
 Borough Boundaries
 Spatial_HP_Distribution.csv
 Tile_Issue_Testbed.ipynb
+sylvania.pem
+SylvaniaConfig
+AWS
 
 __pycache__/
 *.py[cod]
