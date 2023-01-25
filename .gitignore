@@ -15,6 +15,9 @@ sylvania.pem
 SylvaniaConfig
 TreeFolio_CodeBase_Deliverables.png
 AWS
+LiDAR_HP_MATRIX
+ProcessLas.log
+notes.txt
 
 __pycache__/
 *.py[cod]

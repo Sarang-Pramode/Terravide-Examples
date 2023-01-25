@@ -10,24 +10,19 @@ from os import path
 #    FTP functions
 ########################################################################################################
 
-def FTP_download_lasfile(filename, datayear=2017, folderpath="/Volumes/Elements/Terravide/Datasets/FTP_files/LiDAR/"):
+def FTP_download_lasfile(filename, datayear=2017, folderpath="testD/"):
     """Downlaod a las file from ftp.gis.ny.gov
 
     Args:
-        filename (string): lasfile to download from ftp server
+        filename (string): lasfile to download from ftp server , Eg: '1001.las'
         datayear (_type_): which year to look at , 2017, 2021
         folderpath (_type_): where to download the file into
 
     Returns:
         None
     """
-    print('module name:', __name__)
-    print('parent process:', os.getppid())
-    print('process id:', os.getpid())
 
     assert datayear in [2017,2021], "NYC recorded lidar data only during 2017 and 2021, default is 2021"
-
-    #print("[UTIL] Function - Datayear : ",datayear)
 
     domain = 'ftp.gis.ny.gov'
     ftp_datadir = None
@@ -38,12 +33,17 @@ def FTP_download_lasfile(filename, datayear=2017, folderpath="/Volumes/Elements/
         ftp_datadir =  'elevation/LIDAR/NYC_2021'
         folderpath_subdir = folderpath + "NYC_2021/" 
     
+    # Create a new directory because it does not exist
+    if not os.path.exists(folderpath_subdir):
+        os.makedirs(folderpath_subdir)
+        print("FTP Dataset Directory created!")
+    
     #Added blocker to not redownload file if already exists
     if (path.exists(folderpath_subdir+filename)):
         print("Filename : ",filename," Exits")
     
     else:
-        print("Downloading File from FTP server")
+        print("Downloading ",filename," from FTP server")
 
         #Login to server
         ftp = FTP(domain)  # connect to host, default port
