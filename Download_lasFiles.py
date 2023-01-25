@@ -1,3 +1,5 @@
+# Notes : Script to Download FTP files and store in a directory
+
 from multiprocessing import Pool
 from ftplib import FTP
 import os
