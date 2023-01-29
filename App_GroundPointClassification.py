@@ -40,10 +40,10 @@ if __name__ == '__main__':
 
     print("Ground Plane Classifcation Algorithm")
 
-    TileDivision = 60 #test purposes
+    TileDivision = 30 #test purposes
     rows, cols = (TileDivision, TileDivision)
 
-    lasfilepath = 'Datasets/FTP_files/LiDAR/NYC_2017/25192.las'
+    lasfilepath = 'Datasets/FTP_files/LiDAR/NYC_2017/922132.las'
     lasfile_object = LFP.Read_lasFile(lasfilepath)
     lidar_df, rawpoints = LFP.Create_lasFileDataframe(lasfileObject=lasfile_object)
 
@@ -68,21 +68,30 @@ if __name__ == '__main__':
 
     GP_obj = GP.GP_class()
 
+    t = 0
+
     for row in range(TileDivision):
         for col in range(TileDivision):
 
+            t = t+1
+
+            print(t)
             tile_segment_points = lidar_TilesubsetArr[row][col].iloc[:,:3].to_numpy()
 
-            Ground_Points, _ = GP_obj.Extract_GroundPoints(tile_segment_points)
+            Ground_Points, NGround_Points = GP_obj.Extract_GroundPoints(tile_segment_points)
 
             for k in Ground_Points:
                 Potential_Ground_Points.append(k) #append points which may be potentially ground points
+            for l in Ground_Points:
+                Other_points.append(l) #append points which may be potentially ground points
     
     g_end = time.time()
     gtime = g_end - g_start
     print("Ground Point Extraction Algorithm Serial Time : ",gtime)
 
     View3Dpoints(Potential_Ground_Points)
+    View3Dpoints(NGround_Points)
 
 #TODO
 # Resolve unwanted roofs coming in ground plane 
+#NOTE : trivial solution take larger subtiles - works well for most cases, fails when there is a high degree of variations of Z within a single las file

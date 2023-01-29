@@ -18,6 +18,7 @@ AWS
 LiDAR_HP_MATRIX
 ProcessLas.log
 notes.txt
+TEST_log.log
 
 __pycache__/
 *.py[cod]
