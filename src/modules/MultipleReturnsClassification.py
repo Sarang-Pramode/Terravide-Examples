@@ -1,9 +1,10 @@
-import open3d as o3d
+#import open3d as o3d
 import numpy as np
 from sklearn import decomposition
 from scipy.signal import find_peaks
 from sklearn.mixture import GaussianMixture
 from scipy.spatial import ConvexHull
+from sklearn.cluster import DBSCAN
 import json
 from pyproj import Transformer
 
@@ -60,15 +61,20 @@ class MR_class(lasTileClass):
         Tree_points = []
         Not_Tree_points = []
 
-        #Open3d point cloud object
-        pcd = o3d.geometry.PointCloud()
-        #convert to vector3d object
-        MR_rawpointsVectorObj = o3d.utility.Vector3dVector(MR_rawPoints)
-        #store in pcd object
-        pcd.points = MR_rawpointsVectorObj
+        db = DBSCAN(eps=hp_eps, min_samples=hp_min_points).fit(MR_rawPoints)
+        core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+        core_samples_mask[db.core_sample_indices_] = True
+        labels_dbscan = db.labels_
+
+        # #Open3d point cloud object
+        # pcd = o3d.geometry.PointCloud()
+        # #convert to vector3d object
+        # MR_rawpointsVectorObj = o3d.utility.Vector3dVector(MR_rawPoints)
+        # #store in pcd object
+        # pcd.points = MR_rawpointsVectorObj
 
         #perform dbscan
-        labels_dbscan = np.array(pcd.cluster_dbscan(eps=hp_eps, min_points=hp_min_points))
+        #labels_dbscan = np.array(pcd.cluster_dbscan(eps=hp_eps, min_points=hp_min_points))
 
         #Stored label ID and count of labels for this cluster in 2d array
         labels_unique , label_counts = np.unique(labels_dbscan,return_counts=True)
@@ -98,7 +104,7 @@ class MR_class(lasTileClass):
                 interested_cluster_label = Potential_TreeLabels[i]
                 interested_label_indexes = np.where(labels == interested_cluster_label)
                 # need to use asarray, to extract points based on indexes later
-                clustered_points = np.asarray(pcd.points)
+                clustered_points = np.asarray(MR_rawPoints)
                 #get points of latest outlier object
                 labels_PC_points_reduced = list(clustered_points[interested_label_indexes])
                 
@@ -146,9 +152,15 @@ class MR_class(lasTileClass):
         # labels_dbscan_LMpoints = DBSCAN(eps=1.4, min_samples=1).fit(Tree_LM)
         TreeIdentifier = [] # stores a list of shape Nx3 - each element represents a Tree location
         if Tree_LM.shape[0] != 0 :
-            pcd_LMpoints = o3d.geometry.PointCloud()
-            pcd_LMpoints.points = o3d.utility.Vector3dVector(Tree_LM)
-            labels_dbscan_LMpoints = np.array(pcd_LMpoints.cluster_dbscan(eps=1.4, min_points=5))
+
+            db = DBSCAN(eps=1.4, min_samples=5).fit(Tree_LM)
+            core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+            core_samples_mask[db.core_sample_indices_] = True
+            labels_dbscan_LMpoints = db.labels_
+
+            # pcd_LMpoints = o3d.geometry.PointCloud()
+            # pcd_LMpoints.points = o3d.utility.Vector3dVector(Tree_LM)
+            # labels_dbscan_LMpoints = np.array(pcd_LMpoints.cluster_dbscan(eps=1.4, min_points=5))
 
             labels_unique_LMpoints , label_counts_LMpoints = np.unique(labels_dbscan_LMpoints,return_counts=True)
             label_count_arr_LMpoints = np.asarray([labels_unique_LMpoints , label_counts_LMpoints]).T
@@ -203,15 +215,20 @@ class MR_class(lasTileClass):
         Tree_points = []
         Not_Tree_points = []
 
-        #Open3d point cloud object
-        pcd = o3d.geometry.PointCloud()
-        #convert to vector3d object
-        MR_rawpointsVectorObj = o3d.utility.Vector3dVector(MR_rawPoints)
-        #store in pcd object
-        pcd.points = MR_rawpointsVectorObj
+        db = DBSCAN(eps=1.4, min_samples=5).fit(MR_rawPoints)
+        core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+        core_samples_mask[db.core_sample_indices_] = True
+        labels_dbscan = db.labels_
+
+        # #Open3d point cloud object
+        # pcd = o3d.geometry.PointCloud()
+        # #convert to vector3d object
+        # MR_rawpointsVectorObj = o3d.utility.Vector3dVector(MR_rawPoints)
+        # #store in pcd object
+        # pcd.points = MR_rawpointsVectorObj
 
         #perform dbscan
-        labels_dbscan = np.array(pcd.cluster_dbscan(eps=hp_eps, min_points=hp_min_points))
+        # labels_dbscan = np.array(pcd.cluster_dbscan(eps=hp_eps, min_points=hp_min_points))
 
         #Stored label ID and count of labels for this cluster in 2d array
         labels_unique , label_counts = np.unique(labels_dbscan,return_counts=True)
@@ -241,7 +258,7 @@ class MR_class(lasTileClass):
                 interested_cluster_label = Potential_TreeLabels[i]
                 interested_label_indexes = np.where(labels == interested_cluster_label)
                 # need to use asarray, to extract points based on indexes later
-                clustered_points = np.asarray(pcd.points)
+                clustered_points = np.asarray(MR_rawPoints)
                 #get points of latest outlier object
                 labels_PC_points_reduced = list(clustered_points[interested_label_indexes])
                 
@@ -368,15 +385,20 @@ class MR_class(lasTileClass):
         Tree_points = []
         Not_Tree_points = []
 
-        #Open3d point cloud object
-        pcd = o3d.geometry.PointCloud()
-        #convert to vector3d object
-        MR_rawpointsVectorObj = o3d.utility.Vector3dVector(MR_rawPoints)
-        #store in pcd object
-        pcd.points = MR_rawpointsVectorObj
+        db = DBSCAN(eps=1.4, min_samples=5).fit(MR_rawPoints)
+        core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+        core_samples_mask[db.core_sample_indices_] = True
+        labels_dbscan = db.labels_
+
+        # #Open3d point cloud object
+        # pcd = o3d.geometry.PointCloud()
+        # #convert to vector3d object
+        # MR_rawpointsVectorObj = o3d.utility.Vector3dVector(MR_rawPoints)
+        # #store in pcd object
+        # pcd.points = MR_rawpointsVectorObj
 
         #perform dbscan
-        labels_dbscan = np.array(pcd.cluster_dbscan(eps=hp_eps, min_points=hp_min_points))
+        # labels_dbscan = np.array(pcd.cluster_dbscan(eps=hp_eps, min_points=hp_min_points))
 
         #Stored label ID and count of labels for this cluster in 2d array
         labels_unique , label_counts = np.unique(labels_dbscan,return_counts=True)
@@ -406,7 +428,7 @@ class MR_class(lasTileClass):
                 interested_cluster_label = Potential_TreeLabels[i]
                 interested_label_indexes = np.where(labels == interested_cluster_label)
                 # need to use asarray, to extract points based on indexes later
-                clustered_points = np.asarray(pcd.points)
+                clustered_points = np.asarray(MR_rawPoints)
                 #get points of latest outlier object
                 labels_PC_points_reduced = list(clustered_points[interested_label_indexes])
                 
