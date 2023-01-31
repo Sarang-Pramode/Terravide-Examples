@@ -858,18 +858,19 @@ if __name__ == '__main__':
     script_start_time = time.time()
 
     #Get las filenames
-    lasfiles_folderpath = '/Volumes/Elements/TerraVide/Datasets/FTP_files/LiDAR/'
+    lasfiles_folderpath = 'Datasets/FTP_files/LiDAR/' #'/Volumes/Elements/TerraVide/' - extension path for hard disk
     year = 2017
 
     LAS_filenames = Get_filenames(lasfiles_folderpath, year)
 
     print("FileCount : "+str(len(LAS_filenames))+" .las files found in path = "+lasfiles_folderpath )
 
-    args = [(i, year,lasfiles_folderpath) for i in LAS_filenames[1010:1020]]
+    #processing multiple specific file
+    args = [(i, year,lasfiles_folderpath) for i in LAS_filenames]
 
     print(args)
 
-    with Pool(10) as p:
+    with Pool(3) as p:
 
          p.starmap(ProcessLas,args)
         
