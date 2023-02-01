@@ -42,7 +42,7 @@ def InitiateLogger(filename: str, year:int)-> None:
     # Create a new directory because it does not exist 
         os.makedirs(LoggerPath)
 
-    logfilename = LoggerPath + filename+'.log' 
+    logfilename = LoggerPath + 'ProcessScript_'+filename+'.log' 
     logger = logging.getLogger()
     fhandler = logging.FileHandler(filename=logfilename, mode='a')
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

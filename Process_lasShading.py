@@ -20,6 +20,7 @@ import logging
 import re
 import os
 from pyproj import Transformer
+from datetime import timedelta
 
 
 # from ipywidgets import IntProgress
@@ -40,11 +41,11 @@ COLOR_DICT = {
     "PINK" : [255,0,255]
 }
 
-DATE_DICT = {
-    "YEAR" : 2021,
-    "MONTH" : 6,
-    "DAY" : 21
-}
+# DATE_DICT = {
+#     "YEAR" : 2021,
+#     "MONTH" : 6,
+#     "DAY" : 21
+# }
 
 
 def Create_Dataframe_fromLas(lasFilePath):
@@ -131,17 +132,6 @@ def Get_SR_Treepoints_from_Hashmap(TreeClusterID, SR_TreeClusterDict, las_filena
 def Get_MR_Treepoints_from_Hashmap(TreeClusterID, MR_TreeClusterDict, las_filename='25192'):
     return MR_TreeClusterDict[las_filename+"_"+str(TreeClusterID)]
 
-def Get_FullTree_points(TreeClusterArr, SR_TreeClusterDict, MR_TreeClusterDict, Ground_Elevation = 0, Tree_Height = 0):
-    Full_Tree = []
-    for Tree_Id in TreeClusterArr:
-        TreePoints_SR = Get_SR_Treepoints_from_Hashmap(Tree_Id,SR_TreeClusterDict)
-        TreePoints_MR = Get_MR_Treepoints_from_Hashmap(Tree_Id,MR_TreeClusterDict)
-        All_SingleTree_points = np.concatenate((TreePoints_MR,TreePoints_SR), axis=0)
-        All_SingleTree_points = All_SingleTree_points*3.28 # Convert m to ft
-        for p in All_SingleTree_points:
-            Full_Tree.append(p - [0,0,Ground_Elevation+Tree_Height]) #Height Adjusted, default = 0
-            
-    return np.array(Full_Tree)
 
 def Get_FullTreeCentroid(Full_Tree_points):
     centroid = np.mean(Full_Tree_points,axis=0)
@@ -189,14 +179,6 @@ def Get_FurthestPointFromTreeCentroid(Full_Tree, TreeShadow):
 def Get_ShadowAlphaShape(ShadowPoints):
     return alphashape.alphashape(ShadowPoints, alpha=0)
 
-def Get_TreeLocation(TreeID, TreeID_Location_dict, las_filename='25192'):
-    return TreeID_Location_dict[las_filename+"_"+str(TreeID)]
-
-def Get_TreeGroundElevation(TreeID, GroundElevation_ClusterDict, las_filename='25192'):
-    return GroundElevation_ClusterDict[las_filename+"_"+str(TreeID)]
-    
-def Get_TreeHeight(TreeID, TreeHeights_ClusterDict, las_filename='25192'):
-    return TreeHeights_ClusterDict[las_filename+"_"+str(TreeID)]
 
 def Get_GroundElevation(BuildingLidarDict):
     arr = (np.concatenate(list(BuildingLidarDict.values())))
@@ -233,10 +215,12 @@ def sample_polygon(V, eps=0.25):
     return Q
 
 def Read_GeoJSON(filepath):
-    with open('buildingsTile25192.geojson', 'rb') as fd:
+    with open(filepath, 'rb') as fd:
         data = json.load(fd)
 
     return data
+
+    
 
 def Get_SampledBuildingFootprints(Buildingdata):
     BuildingFeature_Coords = [np.array(F['geometry']['coordinates'][0][0]) for F in Buildingdata['features']]
@@ -250,8 +234,8 @@ def Get_BuildingFootprint(GeoJSON_Filepath):
 
     return Get_SampledBuildingFootprints(BuidlingFootprintData)
 
-def Get_BuildingDataDict(BuildingFilePath, las_filename='25192', las_file_year=2015):
-    with open('buildingsTile25192.geojson', 'rb') as fd:
+def Get_BuildingDataDict(BuildingFilePath, f, year=2017):
+    with open(BuildingFilePath, 'rb') as fd:
         NYC_building_Footprint = json.load(fd)
     
     Vs_25192 = [np.array(F['geometry']['coordinates'][0][0]) for F in NYC_building_Footprint['features']]
@@ -261,12 +245,12 @@ def Get_BuildingDataDict(BuildingFilePath, las_filename='25192', las_file_year=2
     #Building_Data_dict
     Building_coords_dict = {}
     B_ID = 0
-    Building_Key = las_filename + "_" + str(las_file_year) + "_Building_" + str(B_ID) # initialized to 25192_2015_Building_0
+    Building_Key = f[:-4] + "_" + str(year) + "_Building_" + str(B_ID) # initialized to 25192_2015_Building_0
 
     for building in range(Total_Building_Count):
 
         B_ID += 1
-        Building_Key = las_filename + "_" + str(las_file_year) + "_Building_" + str(B_ID) # initialized to 25192_2015_Building_0
+        Building_Key = f[:-4] + "_" + str(year) + "_Building_" + str(B_ID) # initialized to 25192_2015_Building_0
         building_coords = sample_polygon(Ws_25192[building]) #NYC_building_Footprint['features'][building]['geometry']['coordinates'][0][0]
         Building_coords_dict[Building_Key] = building_coords
     
@@ -327,6 +311,7 @@ def Get_BuildingFootprintSampledCoords(BIDs_Arr, Building_coords_dict):
 
 def Get_BuildingLidarPoints(BIDs_Arr, Building_coords_dict, lasdf):
 
+
     lidarPointsRaw = lasdf.iloc[:,:3].to_numpy()
     # Selecting Lidar Points within Building footprint
 
@@ -342,6 +327,9 @@ def Get_BuildingLidarPoints(BIDs_Arr, Building_coords_dict, lasdf):
     X_div_len = X_diff/X_plane_tile_divisor
     Y_div_len = Y_diff/Y_plane_tile_divisor
 
+    # print(X_max , X_min)
+    # print(Y_max , Y_min)
+
     #NOTE : Iterating over all the points takes too long, need a more optimized way 
 
     lidar_BpointsDict = {}
@@ -354,6 +342,7 @@ def Get_BuildingLidarPoints(BIDs_Arr, Building_coords_dict, lasdf):
 
         #get the sampled building footprint points
         bf_points = Building_coords_dict[B_ID]
+        
 
         #create a 2D convex Hull
         bf_shape = ConvexHull(bf_points[:,:2])
@@ -366,12 +355,17 @@ def Get_BuildingLidarPoints(BIDs_Arr, Building_coords_dict, lasdf):
         bf_shape_X_min = bf_shape.min_bound[0] - X_div_len
         bf_shape_Y_min = bf_shape.min_bound[1] - Y_div_len
 
+        # print(bf_shape_X_max,bf_shape_Y_max,bf_shape_X_min,bf_shape_Y_min)
+
         #Bounded_Vertices_BF = bf_points[bf_shape.vertices]
 
         lidar_subset_df = lasdf[
             (lasdf['X'].between(bf_shape_X_min, bf_shape_X_max, inclusive=False) &
         lasdf['Y'].between(bf_shape_Y_min, bf_shape_Y_max, inclusive=False))
         ]
+
+        # print("subset shape : ",lidar_subset_df.shape)
+
 
         #Get only points from BF
         lidar_BFMasked_points = lidar_subset_df.iloc[:,:3].to_numpy()
@@ -384,6 +378,7 @@ def Get_BuildingLidarPoints(BIDs_Arr, Building_coords_dict, lasdf):
         bf_shape_alpha = alphashape.alphashape(bf_points_with_Z, alpha=0)
 
         for p in lidar_BFMasked_points:
+            
             tp = Point(p)
             if(tp.within(bf_shape_alpha)):
                 B_ID_LidarPointsTempList.append(p)
@@ -568,17 +563,18 @@ def Get_InShadePoints(TreeShadow, All_Building_LidarPointsDict_HAdj, Az, Amp):
 
 def InitiateShadingLogger(filename:str,year:int)-> None:
 
-    LoggerPath = "Datasets/"+"Package_Generated/TEST_DIR/"+filename+"/"+str(year)+"/Shading_Logs_"+filename+"/"
+    #Where the logger file will be created
+    LoggerPath = "Datasets/"+"Package_Generated/"+filename[:-4]+"/"+str(year)+"/Shading_Logs_"+filename[:-4]+"/"
 
     print("Logger Folder Path : ",LoggerPath)
-    # Check whether the specified pptk_capture_path exists or not
+    # Check whether the specified LoggerPath exists or not
     isExist = os.path.exists(LoggerPath)
 
     if not isExist:
     # Create a new directory because it does not exist 
         os.makedirs(LoggerPath)
 
-    logfilename = LoggerPath + filename+'.log' 
+    logfilename = LoggerPath + 'ShadingScript_'+filename[:-4]+'.log' 
     logger = logging.getLogger()
     fhandler = logging.FileHandler(filename=logfilename, mode='a')
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -608,9 +604,177 @@ def parse_log_Completedfiles(log_file_path):
                 filenames.append(match.group())
     return filenames
 
+#Functions modified from v1
 def Get_dirnames(parent_path:str)->list:
     dirnames = [d for d in os.listdir(parent_path) if os.path.isdir(os.path.join(parent_path, d))]
     return dirnames
+
+# Reading JSON tree data
+def Get_JSONfilenames(folder_path:str, year:int)->list:
+    filenames = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+    return filenames
+
+def Get_TreeLocation(json_dataBuffer):
+    lat = json_dataBuffer['PredictedTreeLocation']['Latitude']
+    lon = json_dataBuffer['PredictedTreeLocation']['Longitude']
+    return lat,lon
+
+def Get_TreeGroundElevation(json_dataBuffer):
+    return json_dataBuffer['GroundZValue']
+
+def Get_TreeHeight(json_dataBuffer):
+    return json_dataBuffer['TreeFoliageHeight']
+
+def Get_FullTree_points(json_dataBuffer, Ground_Elevation = 0, Tree_Height = 0):
+    Full_Tree = []
+    
+    #TODO : might be doing repetitive conversion here
+    All_SingleTree_points = np.array(json_dataBuffer['Tree_Points'])*3.28 # Convert m to ft
+    for p in All_SingleTree_points:
+        Full_Tree.append(p - [0,0,Ground_Elevation+Tree_Height]) #Height Adjusted, default = 0
+            
+    return np.array(Full_Tree)
+
+def Get_TreesNotPark(json_filenames, JSON_TreeData_path):
+    JsonFiles_notInPark = []
+    for jf in json_filenames:
+        json_filobj = open(JSON_TreeData_path + jf)
+        json_SingleTreeDataBuffer = json.load(json_filobj)
+        if not json_SingleTreeDataBuffer['InPark']:
+            JsonFiles_notInPark.append(jf)
+    
+    return JsonFiles_notInPark
+
+def Get_AllTreePoints_from_JSONfiles(json_filenames,JSON_TreeData_path):
+    tree_p = []
+    for jf in json_filenames:
+        json_filobj = open(JSON_TreeData_path + jf)
+        json_SingleTreeDataBuffer = json.load(json_filobj)
+
+        singleTreePoints = json_SingleTreeDataBuffer['Tree_Points']
+
+        for p in singleTreePoints:
+            tree_p.append(p)
+    
+    return tree_p
+
+def footprintPointsFromGeoJSON_v2(feature):   
+    points = []
+
+    try:
+        height = feature["properties"]["heightroof"] 
+        
+        if type(height) == float:
+            height = height
+        else:
+            height = 0
+    except:
+        height = 0
+    
+    if feature['geometry']['type'] == 'Point':
+        point = [feature["geometry"]["coordinates"][0],feature["geometry"]["coordinates"][1],height]
+        points.append(point)
+        point = [feature["geometry"]["coordinates"][0],feature["geometry"]["coordinates"][1],0]
+        points.append(point) 
+    elif feature['geometry']['type'] == 'LineString':
+        for polygonPart in feature["geometry"]["coordinates"]:                
+            for polygonSubPart in polygonPart:
+                point = [polygonSubPart[0],polygonSubPart[1],height]
+                points.append(point)
+                point = [polygonSubPart[0],polygonSubPart[1],0]
+                points.append(point)                  
+    # elif feature['geometry']['type'] == 'Polygon':
+    #     for polygonPart in feature["geometry"]["coordinates"]:                
+    #         for polygonSubPart in polygonPart:
+    #             for coordinates in polygonSubPart:
+    #                 point = [coordinates[0],coordinates[1],height]
+    #                 points.append(point)
+    #                 point = [coordinates[0],coordinates[1],0]
+    #                 points.append(point)
+    elif feature['geometry']['type'] == 'MultiPolygon':
+        for MpolygonPart in feature["geometry"]["coordinates"]:
+            for polygonPart in MpolygonPart:                
+                for polygonSubPart in polygonPart:
+                    #print(polygonSubPart)
+                    #for coordinates in polygonSubPart:
+                    point = [polygonSubPart[0],polygonSubPart[1],height]
+                    points.append(point)
+                    point = [polygonSubPart[0],polygonSubPart[1],0]
+                    points.append(point) 
+    else:
+        pass
+        #print(feature['geometry']['type'])
+        #print(feature["geometry"]["coordinates"])
+
+    return points, height
+
+#Functions to trim geojson
+def findCentroid(buildingPoints):
+    xs = []
+    ys = []
+    for buildingPoint in buildingPoints:
+        xs.append(buildingPoint[0])
+        ys.append(buildingPoint[1])
+    xCenter = sum(xs)/len(xs)
+    yCenter = sum(ys)/len(ys)
+    return xCenter, yCenter
+
+def convertLatLon(lat,lon):
+    #translate from geojson CRS (NAD 1983) to .las CRS (UTM Zone 18N (meters))
+    transformer = Transformer.from_crs( "epsg:4326", "epsg:2263" ) 
+    x, y = transformer.transform(lat, lon)
+    return x, y
+
+def convertXY(x,y):
+    #translate from .las CRS to geojson CRS (NAD 1983) (UTM Zone 18N (meters))
+    transformer = Transformer.from_crs( "epsg:2263", "epsg:4326" ) 
+    lat, lon = transformer.transform(x, y)
+    return lat, lon
+
+def lasdf_bounds(lasdf):
+
+    xMin = min(lasdf.X)
+    xMax = max(lasdf.X)
+    yMin = min(lasdf.Y)
+    yMax = max(lasdf.Y)
+
+    return xMin,yMin,xMax,yMax
+
+def trimGeoJSON_v2(features,lasdf):
+
+    #print(len(features))
+
+    xMin,yMin,xMax,yMax = lasdf_bounds(lasdf)
+    
+    Min_lat,Min_lon  = convertXY(xMin, yMin)
+    Max_lat,Max_lon  = convertXY(xMax, yMax)
+
+
+    features2 = []
+    
+    for feature in features: #NOTE: modified from - for feature in features[:]:
+        buildingPoints,height = footprintPointsFromGeoJSON_v2(feature)
+
+        xCenter, yCenter = findCentroid(buildingPoints)
+
+        #lat varies in y direction
+        #lon varies in x direction
+        
+        if yCenter > Min_lat and yCenter < Max_lat and xCenter > Min_lon and xCenter < Max_lon:
+            features2.append(feature)
+        
+        else:
+            continue
+        
+    return features2
+    
+def convert_dict_of_arrays(data):
+    transformer = Transformer.from_crs("epsg:4326", "epsg:2263" )
+    converted_data = {}
+    for key, value in data.items():
+        x, y = transformer.transform(value[:,1], value[:,0])
+        converted_data[key] = np.column_stack((x, y))
+    return converted_data
 
 
 def ProcessShading(f,year,fpath):
@@ -621,27 +785,214 @@ def ProcessShading(f,year,fpath):
 
         InitiateShadingLogger(f,year)
 
+        ShadeYear = 2021
+        start = datetime.datetime(ShadeYear, 1, 8) #8 am
+        end = datetime.datetime(ShadeYear, 6, 30, 17, 59) #6 pm
+        delta = timedelta(minutes=15)
+
+        logging.info("Year : %d",ShadeYear)
+        logging.info("Start date : %s",start)
+        logging.info("End date : %s",end)
+        logging.info("Time Interval : 15")
+
         logging.info("TerraVide lidar Shading Metrics Estimation Initated")
 
-        las_file_path = 'Datasets/Package_Generated/'+f[:-4]+'/'+str(year)+'/LasClassified_'+f[:-4]+'/lasFile_Reconstructed_'+f[:-4]+'.las'
+        las_file_path = fpath+f[:-4]+'/'+str(year)+'/LasClassified_'+f[:-4]+'/lasFile_Reconstructed_'+f[:-4]+'.las'
 
         logging.info("Reading Reconstructed lasfile from : %s",las_file_path)
 
         #Create a dataframe from las file
         lasdf = Create_Dataframe_fromLas(las_file_path)
-
         
+        #in ft
+        lasdf.X = lasdf.X*3.28
+        lasdf.Y = lasdf.Y*3.28
+        lasdf.Z = lasdf.Z*3.28
+
+        #Buidling footprint of all NYC buildings - 2015 data
+        NYC_GeoJSON_Filepath = 'Datasets/BuildingTileSet/building_BL.geojson'
+        BuidlingFootprintData = Read_GeoJSON(NYC_GeoJSON_Filepath)
+
+        Filtered_FeatureList = trimGeoJSON_v2(BuidlingFootprintData['features'],lasdf)
+
+        #Save to Geojson
+
+        # Serialize features into a GeoJSON string
+        features_geojson = {
+            "type": "FeatureCollection",
+            "features": Filtered_FeatureList
+        }
+        features_str = json.dumps(features_geojson)
+
+        geojson_folderpath = 'Datasets/Package_Generated/'+f[:-4]+'/'+str(year)+'/GeoJSON_BuildingFootprint_'+f[:-4]+'/'
+        geojson_filename = 'Filtered_buildingsTile_'+f[:-4]+'.geojson'
+
+        # Check whether the specified geojson_folderpath exists or not
+        isExist = os.path.exists(geojson_folderpath)
+
+        if not isExist:
+        # Create a new directory because it does not exist 
+            os.makedirs(geojson_folderpath)
+        # Write GeoJSON string to a file
+        with open(geojson_folderpath+geojson_filename, "w") as file:
+            file.write(features_str)
+            logging.info("Building Footprint for tileset created")
+        
+        Building_coords_dict_latlong_coords = Get_BuildingDataDict(geojson_folderpath+geojson_filename, f, year=2017)
+        Building_coords_dict = convert_dict_of_arrays(Building_coords_dict_latlong_coords)
+
+        logging.info("TerraVide lidar Shading Metrics Estimation Initated")
+
+        #Path to where each lasfiles JSON tree data is located (generated by Process_lasFiles.py)
+        JSON_TreeData_path = fpath+f[:-4]+'/'+str(year)+'/JSON_TreeData_'+f[:-4]+'/'
+        #Get filenames(1 json file = 1 tree cluster) of each json file
+        JSON_filenames = Get_JSONfilenames(JSON_TreeData_path,year)
+        #Get trees not present in park areas
+        JSON_filenamesNotPark = Get_TreesNotPark(JSON_filenames, JSON_TreeData_path)
+
+        logging.info("Total number of Trees : %d",len(JSON_filenames))
+        logging.info("Total number of Trees not in Park: %d",len(JSON_filenamesNotPark))
+
+        #Used for debugging with pptk viewer
+        Raw_TreePointsNotPark = Get_AllTreePoints_from_JSONfiles(JSON_filenamesNotPark,JSON_TreeData_path)
+
+        # CSV header
+        header = ['DateTime_ISO', 'Year', 'Month', 'Day', 'hour', 'minute', 'Sun_Azimuth', 'Sun_Amplitude',
+            'Tree_Number', 'Tree_Latitude', 'Tree_Longitude',
+            'Shadow_Length','Shadow_Breadth','Shadow_Area','TreeShadow_PointCount',
+            'Perc_Canopy_StreetShade', 'Perc_Canopy_FacadeShade', 'Perc_Canopy_InShade',
+            'ShadowArea_Ground', 'ShadowArea_OnBuilding', 'ShadowArea_InBuildingShadow']
+        
+        for jf in JSON_filenamesNotPark:
+            #Reading a single file
+            TreeId = jf.split('_')[3] #25192_2017_ID_1_TreeCluster.json
+
+            logging.info("Shading Metrics Calculation started for tree : %s",TreeId)
+
+            json_filobj = open(JSON_TreeData_path + jf)
+            json_SingleTreeDataBuffer = json.load(json_filobj)
+
+            shadingCSV_folderpath =fpath+f[:-4]+'/'+str(year)+'/ShadingMetrics'+f[:-4]+'/'
+            shadingCSV_filename = 'ShadingMetric_'+f[:-4]+'_Tree_ID_'+TreeId+'.csv'
+
+            # Check whether the specified geojson_folderpath exists or not
+            isExist = os.path.exists(shadingCSV_folderpath)
+
+            if not isExist:
+            # Create a new directory because it does not exist 
+                os.makedirs(shadingCSV_folderpath)
+
+            with open(shadingCSV_folderpath+shadingCSV_filename, 'w', encoding='UTF8') as csv_f:
+                writer = csv.writer(csv_f)
+
+                # write the header
+                writer.writerow(header)
+
+
+                current = start
+                while current <= end:
+                    day = current.day
+                    hour = current.hour
+                    minute = current.minute
+                    month = current.month
+                    # Use the values as needed
+                    current += delta
+
+                    #print(ShadeYear, month, day, hour, minute)
+
+                    #Tree Data
+                    Tree_Lat , Tree_Long = Get_TreeLocation(json_SingleTreeDataBuffer)
+                    Tree_GroundZ = Get_TreeGroundElevation(json_SingleTreeDataBuffer) #Convert to ft, JSON file has m stored
+                    Tree_Height = Get_TreeHeight(json_SingleTreeDataBuffer)
+
+                    # GET AZ and Amp
+                    date, Az, Amp = Get_SunData(Tree_Lat, Tree_Long, ShadeYear, month, day, hour, minute)
+
+                    if Amp > 0:
+                        #Get Tree Points
+                        Full_Tree = Get_FullTree_points(json_SingleTreeDataBuffer,Tree_GroundZ)
+
+                        #Proj_Tree = get_projection(Full_Tree, 45, True)
+                        TreeShadow = Get_Shadow(Full_Tree, Az, Amp) #(points, az, amp)
+
+                        L,B,A = Get_ShadowCharacteristics(Full_Tree, TreeShadow)
+
+                        #Get Primary Building IDs
+                        #PrimaryBuilding_IdArr = Get_BuildingsUnderEffectOfShadow(Building_coords_dict, TreeShadow)
+                        PrimaryBuilding_IdArr = Get_BuildingsUnderEffectOfShadow_Rapid(Building_coords_dict, TreeShadow) #Function is 50% faster
+                        #Get Primary Building Coords
+                        PrimaryBuilding_FootprintCoords = Get_BuildingFootprintSampledCoords(PrimaryBuilding_IdArr, Building_coords_dict)
+
+                        #Get Primary Building Lidar Points
+                        PrimaryBuilding_LidarPointsDict = Get_BuildingLidarPoints(PrimaryBuilding_IdArr, Building_coords_dict, lasdf)
+
+                        #Get ground elevation from building points
+                        G_height = Tree_GroundZ #NOTE : Same as Tree_GroundZ
+                        #Adjusting height of Buildings
+                        PrimaryBuilding_LidarPointsDict_HAdj = Set_BuildingLidarHeightAdjustment(PrimaryBuilding_LidarPointsDict, G_height)
+
+                        #Bounding Box
+                        Distance = 200
+                        Tree_ShadowBox_Coords, Tree_ShadowBoxExtend_Coords = Get_TreeShadowBoundingBoxesCoords(TreeShadow, Distance)
+                        TSBox = sample_polygon(Tree_ShadowBox_Coords)
+                        TSBox = np.c_[TSBox, np.zeros(len(TSBox))]
+                        TSBoxExtend = sample_polygon(Tree_ShadowBoxExtend_Coords)
+                        TSBoxExtend = np.c_[TSBoxExtend, np.zeros(len(TSBoxExtend))]
+
+                        #Get All buildings Falling under Extended Tree ShadowBox
+                        All_Building_IdArr = Get_BuildingsUnderEffectOfShadow_Rapid(Building_coords_dict, TSBoxExtend)
+                        #Get Secondary Building Lidar Points
+                        All_Building_LidarPointsDict = Get_BuildingLidarPoints(All_Building_IdArr, Building_coords_dict, lasdf)
+                        #Get ground elevation from building points
+                        G_height = Tree_GroundZ #NOTE : Same as Tree_GroundZ
+                        #Adjusting height of Buildings
+                        All_Building_LidarPointsDict_HAdj = Set_BuildingLidarHeightAdjustment(All_Building_LidarPointsDict, G_height)
+
+                        #Get Secondary Buildings
+                        SecondaryBuilding_IdArr = [b for b in All_Building_IdArr if b not in PrimaryBuilding_IdArr]
+                        #Get Secondary Building Coords
+                        SecondaryBuilding_FootprintCoords = Get_BuildingFootprintSampledCoords(SecondaryBuilding_IdArr, Building_coords_dict)
+                        #Get Secondary Building Lidar Points
+                        SecondaryBuilding_LidarPointsDict = Get_BuildingLidarPoints(SecondaryBuilding_IdArr, Building_coords_dict, lasdf)
+                        #Get ground elevation from building points
+                        G_height = Tree_GroundZ #NOTE : Same as Tree_GroundZ
+                        #Adjusting height of Buildings
+                        SecondaryBuilding_LidarPointsDict_HAdj = Set_BuildingLidarHeightAdjustment(SecondaryBuilding_LidarPointsDict, G_height)
+
+                        # Shade Metrics
+
+                        # 1. Facade Shade - Points falling on the building footprint
+                        # 2. In Shade - Points Fall within the shadow of Buildings not in the building footprint
+                        # 3. Street Shade - Tree Shadow Points not overcasted by Anything
+                        RemainingShadow_Points, FacadeShade_Points = Get_FacadeShadePoints(TreeShadow, PrimaryBuilding_IdArr, Building_coords_dict)
+                        RemainingShadow_Points, InShade_Points = Get_InShadePoints(RemainingShadow_Points, All_Building_LidarPointsDict_HAdj, Az, Amp)
+                        StreetShade_Points = RemainingShadow_Points
+
+                        #print(len(FacadeShade_Points)/len(TreeShadow) , len(InShade_Points)/len(TreeShadow) ,len(StreetShade_Points)/len(TreeShadow))
+
+                        Perc_Canopy_StreetShade = round(len(StreetShade_Points)/len(TreeShadow),3)
+                        Perc_Canopy_FacadeShade = round(len(FacadeShade_Points)/len(TreeShadow),3)
+                        Perc_Canopy_InShade = round(len(InShade_Points)/len(TreeShadow),3)
+
+                        data = [date,ShadeYear, month, day, hour+4, minute, Az, Amp,
+                                TreeId, round(Tree_Lat,6), round(Tree_Long,6), round(L,3), round(B,3), round(A,3), len(TreeShadow),
+                                Perc_Canopy_StreetShade*100, Perc_Canopy_FacadeShade*100, Perc_Canopy_InShade*100,
+                                A*Perc_Canopy_StreetShade, A*Perc_Canopy_FacadeShade, A*Perc_Canopy_InShade]
+                    else:
+                        data = [date,ShadeYear, month, day, hour+4, minute, Az, Amp,
+                                TreeId, round(Tree_Lat,6), round(Tree_Long,6), 0, 0, 0, 0,
+                                0, 0, 0,
+                                0, 0, 0]
+
+                    print(data)
+                    writer.writerow(data)
 
         etime = time.time()
 
-
+        logging.info("Shade Estimation Completed (in min): %d", (etime - stime)/60)
 
     except Exception as e:
         logging.error("ERROR : %s",str(e))
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -650,7 +1001,7 @@ if __name__ == "__main__":
     script_start_time = time.time()
 
     #Get las directory names from parent root folder
-    p_rootpath = "Datasets/Package_Generated/" #'/Volumes/Elements/TerraVide/Datasets/FTP_files/LiDAR/'
+    p_rootpath = 'Datasets/Package_Generated/' #'/Volumes/Elements/TerraVide/Datasets/FTP_files/LiDAR/'
     year = 2017
 
     LAS_dirnames = Get_dirnames(p_rootpath)
