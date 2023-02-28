@@ -731,15 +731,14 @@ def ProcessLas(f,year,fpath):
                                     Global_TreeCounter + 1,
                                     Elevation,
                                     jfolderpath)
-        
+
+        #Remove NT points from ground points
+        #Extracted_NTpoints = np.array([i for i in Extracted_NTpoints if i not in Gpoints])
+
         All_Classified_points = np.concatenate((Gpoints, Trees_Buffer,Extracted_SRpoints,Extracted_NTpoints), axis=0)
 
-        class_1Labels = [1]*(len(Gpoints))
-        class_2Labels = [2]*(len(Trees_Buffer))
-        class_3Labels = [3]*(len(Extracted_SRpoints))
-        class_4Labels = [4]*(len(Extracted_NTpoints))
-
-        final_labels = np.concatenate((class_1Labels,class_2Labels,class_3Labels,class_4Labels),axis=0)
+        #Classification codes were defined by the American Society for Photogrammetry and Remote Sensing (ASPRS)
+        #  for LAS formats 1.1, 1.2, 1.3, and 1.4
 
         Classifiedpoints_df = pd.DataFrame(All_Classified_points,columns=["X","Y","Z"])
         Classifiedpoints_df = Classifiedpoints_df.drop_duplicates()
@@ -753,11 +752,11 @@ def ProcessLas(f,year,fpath):
 
         Unclassified_Points = Unclassified_Points_df.to_numpy()
 
-        class_1Labels = [1]*(len(Gpoints))
-        class_2Labels = [2]*(len(Trees_Buffer))
-        class_3Labels = [3]*(len(Extracted_SRpoints))
-        class_4Labels = [4]*(len(Extracted_NTpoints))
-        class_5Labels = [5]*(len(Unclassified_Points))
+        class_1Labels = [2]*(len(Gpoints))
+        class_2Labels = [5]*(len(Trees_Buffer))
+        class_3Labels = [4]*(len(Extracted_SRpoints))
+        class_4Labels = [6]*(len(Extracted_NTpoints))
+        class_5Labels = [1]*(len(Unclassified_Points))
 
         final_labels = np.concatenate((class_1Labels,class_2Labels,class_3Labels,class_4Labels,class_5Labels),axis=0)
         All_points = np.concatenate((Gpoints, Trees_Buffer,Extracted_SRpoints,Extracted_NTpoints,Unclassified_Points), axis=0)
@@ -815,16 +814,12 @@ def ProcessLas(f,year,fpath):
             Gen_las.number_of_returns)).transpose()
         G_lidar_df = pd.DataFrame(Gen_lidarpoints , columns=['X','Y','Z','intensity','classification','return_number','number_of_returns'])
 
-        # class_1Labels = [1]*(len(Gpoints))
-        # class_2Labels = [2]*(len(Trees_Buffer))
-        # class_3Labels = [3]*(len(Extracted_SRpoints))
-        # class_4Labels = [4]*(len(Extracted_NTpoints))
 
-        G_las_Gpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 1].to_numpy()
-        G_las_Tpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 2].to_numpy()
-        G_las_SRpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 3].to_numpy()
-        G_las_NTpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 4].to_numpy()
-        G_las_NCpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 5].to_numpy()
+        G_las_Gpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 2].to_numpy()
+        G_las_Tpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 5].to_numpy()
+        G_las_SRpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 4].to_numpy()
+        G_las_NTpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 6].to_numpy()
+        G_las_NCpoints = G_lidar_df.iloc[:,:3][G_lidar_df["classification"] == 1].to_numpy()
 
         #plotting inlier and outlier
         All_points_1 = np.concatenate((G_las_Gpoints, G_las_Tpoints,G_las_SRpoints,G_las_NTpoints,G_las_NCpoints), axis=0)
@@ -867,10 +862,10 @@ if __name__ == '__main__':
 
     #processing multiple specific file
     args = [(i, year,lasfiles_folderpath) for i in LAS_filenames]
-
+    args = [('25192.las', year,lasfiles_folderpath)]
     print(args)
 
-    with Pool(3) as p:
+    with Pool(1) as p:
 
          p.starmap(ProcessLas,args)
         

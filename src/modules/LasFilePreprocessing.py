@@ -41,10 +41,14 @@ def Create_lasFileDataframe(lasfileObject):
         (lasfileObject.X*Xscale)/3.28 + Xoffset,  # convert ft to m and correct measurement
         (lasfileObject.Y*Yscale)/3.28 + Yoffset,
         (lasfileObject.Z*Zscale)/3.28 + Zoffset,
-        
+        lasfileObject.classification,
         lasfileObject.return_number, 
         lasfileObject.number_of_returns)).transpose()
-    lidar_df = pd.DataFrame(lidarPoints , columns=['X','Y','Z','return_number','number_of_returns'])
+    lidar_df = pd.DataFrame(lidarPoints , columns=['X','Y','Z','classification','return_number','number_of_returns'])
+
+    #Filtering out noise
+    lidar_df = lidar_df[lidar_df["classification"] != 18] #removing high noise
+    lidar_df = lidar_df[lidar_df["classification"] != 7] #removing  noise
 
     #Raw point cloud data
     rawPoints = np.array((

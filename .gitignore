@@ -19,6 +19,7 @@ LiDAR_HP_MATRIX
 ProcessLas.log
 notes.txt
 TEST_log.log
+tile987187.geojson
 
 __pycache__/
 *.py[cod]

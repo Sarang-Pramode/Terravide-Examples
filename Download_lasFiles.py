@@ -117,19 +117,20 @@ def FTP_list_files(datayear=2017):
 
 if __name__ == '__main__':
 
-    DEFAULT_FOLDER_PATH = "testDir/"
+    DEFAULT_FOLDER_PATH = "Datasets/FTP_files/LiDAR/"
     # Get Year Input from User
     year = int(input("Enter Desired YEAR [2017 and 2021 supported] : "))
     # Get List of filnames on FTP server
     filenames = FTP_GetFileList(year)
     # Prepare arguments
     args = [(i, year,DEFAULT_FOLDER_PATH) for i in filenames]
+    args = [('25192.las', year,DEFAULT_FOLDER_PATH)]
 
     print("-------------------------")
     print("--DOWNLOADING FTP FILES--")
     print("-------------------------")
 
-    with Pool(10) as p:
+    with Pool(1) as p:
 
         p.starmap(FTP_download_lasfile,args)
 
